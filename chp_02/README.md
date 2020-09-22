@@ -50,10 +50,13 @@ urlpatterns = [
 
 [django로 블로그 model 만들기](https://velog.io/@hidaehyunlee/Django-%EB%B8%94%EB%A1%9C%EA%B7%B8-model-%EB%A7%8C%EB%93%A4%EA%B8%B0)
 
+
 [장고 ORM과 쿼리셋](https://tutorial.djangogirls.org/ko/django_orm/)
+
 
 [ORM?](https://medium.com/@jsh901220/django%EC%99%80-cookiecutter-django-%EA%B0%84%EB%8B%A8-%EC%84%A4%EB%AA%85-898d063d38ff)
     -> 객체의 관게를 연결해주는 것으로 객체 지향적인 방법을 사용하여 데이터베이스의 데이터를 쉽게 조작할 수 있게 해준다
+
 
 \[models.py]
 ```python
@@ -86,7 +89,7 @@ class Answer(models.Model):
 * `연결모델명_set`(
     여기서는 answer_set) 은 질문 하나에 여러개의 답변이 가능할 것이므로 q.answer_set이 가능하지만 답변 하나에는 여러개의 질문이 있을 수 없으므로 question_set은 불가능하다. 대신 a.question은 가능
 
-## 슈퍼유저
+## 장고 관리자 - 슈퍼유저
 장고의 장점; 장고 관리자(Admin)
 `python manage.py createsuperuser`을 통해 슈퍼 유저를 생성한다.
 
@@ -173,6 +176,7 @@ def index(request):
 ### 템플릿 태그?
 
 공식 사이트 : https://docs.djangoproject.com/en/3.0/topics/templates/
+
 템플릿을 보면 `{% if question_list %}` 처럼 `{%` 와 `%}` 로 둘러싸인 문장들을 볼 수 있는데 이러한 것들을 템플릿 태그라고 한다. `{% endfor% }`과 `{% endif %}`로 꼭 닫아주어야 한다는 것!!
 
 `{{ 객체 }}`
@@ -181,7 +185,7 @@ def index(request):
 
 ![pic](images/question_detail.png)
 
-> 제네릭뷰를 통해 목록조회나 상세조회를 간편하게 접근할 수 있지만 복잡한 케이스를 다루려고 할 때에는 더 어렵게 작성될 수 잇으므로 주의하여 사용하여야 한다
+> 제네릭뷰를 통해 목록조회나 상세조회를 간편하게 접근할 수 있지만 복잡한 케이스를 다루려고 할 때에는 더 어렵게 작성될 수 있으므로 주의하여 사용하여야 한다
 
 ### URL 별칭
 namespace를 통해 c++처럼 namespace로 다양한 library/data를 쓸 수 있게끔 한 것
@@ -237,7 +241,7 @@ answer = Answer(question=question, content=request.POST.get('content'), create_d
 answer.save()
 ```
 
-### 스태틱
+## 스태틱
 스타일시트(stylesheet, CSS 파일)을 사용하여 화면에 디자인을 적용해야 한다
 
 ```html
@@ -248,3 +252,127 @@ answer.save()
 스타일시트와 같은 스태틱 파일을 사용하기 위해서는 템플릿 가장가리에 태그를 삽입해야 한다. 스타일 시트 경로 파일 속에서의 static은 스태틱 디렉터리를 파일에 등록해 주었으므로 static이라는 이름을 통해 접근 가능하다
 
 ![완성](images/answer_style.png)
+
+## 부트스트랩
+
+```html
+{% load static %}
+<link rel = "stylesheet" type ="text/css" href ="{% static 'bootstrap.min.css' %}">
+```
+
+`question_list.html`에 다음과 같이 추가하면 된다 -> html 문법?
+* rel 속성은 link 요소에 반드시 명기되어야 하는 요소. 현재 문서와 외부 리소스 사이의 연관 관계를 명시함. 
+    참고 : https://aboooks.tistory.com/87
+
+> 깨달은 점!
+    이런 프로젝트를 하면 공식 사이트와 많이 친해져야 하며, 프로젝트의 완성도는 내가 얼만큼 구글을 뒤져 정보/지식을 얻었느냐에 따라 달렸다     
+
+![done](images/template.png) 
+
+## 템플릿 상속
+표준 HTML 문서는 `html`, `head`, `body` 태그가 잇어야 하고 `stylesheet` 파일은 `head`태그 안에 있어야 한다. `head` 태그 안에는 필요한 `meta` 태그와 `title` 태그 등도 포함되어 있어야 한다 
+
+```html
+{% load static %}
+<!doctype html>
+<html lang="ko">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" type="text/css" href="{% static 'bootstrap.min.css' %}">
+    <!-- pybo CSS -->
+    <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
+    <title>Hello, pybo!</title>
+</head>
+<body>
+
+... 생략 ...
+
+</body>
+</html>
+```
+![html](images/html.png)
+이렇게 되면 "질문 등록하기" 링크가 `{% url 'pybo:question_create' %}`가 추가된 것이다. 그렇게 되면 목록 조회 화면에 새로운 URL이 추가되었으므로 `pybo/urls.py`에 **URL 매핑을 추가**하여야 한다
+
+```python
+from django.urls import path
+from . import views
+
+app_name = "pybo"
+
+urlpatterns = [
+    path('', views.index, name='index'),
+    path('<int:question_id>/', views.detail, name='detail'),
+    path('answer/create/<int:question_id>/', views.answer_create, name="answer_create"),
+    path('question/create/', views.question_create, name="question_create"),
+]
+```
+
+* `forms.Form` ? 
+    (1) https://developer.mozilla.org/ko/docs/Learn/Server-side/Django/Forms
+
+    (2) https://wayhome25.github.io/django/2017/05/06/django-model-form/
+
+```python
+from django import forms
+from pybo.models import Question
+
+
+class QuestionForm(forms.ModelForm):
+    class Meta:
+        model = Question
+        fields = ['subject', 'content']
+```
+
+ModelForm은 Model과 연결된 폼으로 폼을 저장하면 연결된 모델의 데이터를 저장할 수 있게 된다. 모델 폼은 `class Meta`라는 **내부 클래스가 반드시 필요**하다.
+
+```python
+def question_create(request) :
+
+    if request.method == 'POST' :
+        form=QuestionForm(request.POST)
+        if form.is_valid():
+            question=form.save(commit=False)
+            question.create_date=timezone.now()
+            question.save()
+            return redirect('pybo:index')
+    else:
+        form = QuestionForm()
+    context = {'form':form}
+
+    return render(request, 'pybo/question_form.html', context)
+```
+질문 등록하기 버튼을 클릭한 경우에는 `http://localhost:8000/pybo/question/create/` 페이지가 `GET` 방식으로 호출되면서 `request.method=='GET'`으로 되어 질문등록 화면이 호출되고, 질문 등록 화면에서 저장하기를 누르면 동일한 페이지가 `POST`방식으로 호출되어 데이터가 저장된다.
+
+폼 저장에서 commit=False라는 옵션을 사용하면 -> 폼에 연결된 모델을 저장하지 않고 생성된 모델 객체만 리턴해준다. 그래서 **향후 수정 기능 구현**시 활용, **중복 저장 방지**를 할 수 있다 [참고1](https://whatisthenext.tistory.com/131)
+
+```python
+from django import forms
+from pybo.models import Question
+
+
+class QuestionForm(forms.ModelForm):
+    class Meta:
+        model = Question
+        fields = ['subject', 'content']
+        widgets = {
+            'subject': forms.TextInput(attrs={'class': 'form-control'}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 10}),
+        }
+        labels = {
+            'subject': '제목',
+            'content': '내용',
+        }
+```
+[참고](https://docs.djangoproject.com/en/3.0/topics/forms/)
+
+```html
+<div class = "form-group">
+    <label for="subject">제목</label>
+    <input type="text" class="form-control" name="subject" id="subject"
+            value="{{ form.subject.value|default_if_none:'' }}">
+</div>
+```
+[div?](https://ofcourse.kr/html-course/div-%ED%83%9C%EA%B7%B8) : 구역 나누는 것
